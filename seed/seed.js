@@ -9,11 +9,47 @@ const Bill = require('../models/Bill');
 const { calculateBill } = require('../utils/billCalculator');
 
 const seedDatabase = async () => {
-  try {
-    const mongoUri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/utilityBilling';
-    await mongoose.connect(mongoUri);
-    console.log('Connected to MongoDB for database seeding...');
+  const primaryUri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/utilityBilling';
+  const fallbackUri = 'mongodb://127.0.0.1:27017/utilityBilling';
+  let targetDbName = 'Atlas';
 
+  try {
+    console.log('Connecting to primary MongoDB URI...');
+    await mongoose.connect(primaryUri, { serverSelectionTimeoutMS: 5000 });
+    console.log('✅ Connected to MongoDB Atlas successfully: ' + mongoose.connection.host);
+  } catch (err) {
+    console.error('-------------------------------------------------------');
+    console.error('❌ MongoDB Atlas Connection Failed:', err.message);
+    if (err.message.includes('Authentication failed') || err.message.includes('bad auth')) {
+      console.error('\n⚠️  ATLAS AUTHENTICATION FAILED:');
+      console.error('The database user "project" with password "mani123" was rejected by Atlas.');
+      console.error('👉 How to fix in 30 seconds on MongoDB Atlas:');
+      console.error('   1. Open https://cloud.mongodb.com and select your project');
+      console.error('   2. Click "Database Access" in the left sidebar');
+      console.error('   3. If user "project" exists, click "Edit" -> "Edit Password" -> set to "mani123"');
+      console.error('   4. If not, click "Add New Database User" -> Username: project, Password: mani123');
+      console.error('   5. Set "Database User Privileges" to "Read and write to any database" -> Click "Add User"');
+      console.error('   6. Click "Network Access" in sidebar -> Ensure IP 0.0.0.0/0 is present');
+    }
+    console.error('-------------------------------------------------------');
+
+    if (primaryUri !== fallbackUri) {
+      console.log('🔄 Seeding local MongoDB database (127.0.0.1:27017) so you can test right away...');
+      try {
+        await mongoose.disconnect().catch(() => {});
+        await mongoose.connect(fallbackUri);
+        targetDbName = 'Local MongoDB';
+        console.log('✅ Connected to Local MongoDB successfully: ' + mongoose.connection.host);
+      } catch (localErr) {
+        console.error('Local MongoDB fallback also failed:', localErr.message);
+        process.exit(1);
+      }
+    } else {
+      process.exit(1);
+    }
+  }
+
+  try {
     // Clean existing collections to avoid duplicate key conflicts
     await Promise.all([
       User.deleteMany({}),
@@ -23,7 +59,7 @@ const seedDatabase = async () => {
       Reading.deleteMany({}),
       Bill.deleteMany({})
     ]);
-    console.log('Cleared existing database records.');
+    console.log(`Cleared existing database records in ${targetDbName}.`);
 
     // 1. CREATE TARIFF SLABS (Stored in MongoDB, not hardcoded!)
     const electricityTariff = await Tariff.create({
@@ -257,7 +293,6 @@ const seedDatabase = async () => {
       enteredBy: readerUser._id
     });
     const calcWater = calculateBill(120, waterTariff.slabs, waterTariff.fixedCharge);
-    // Overdue date: August 16
     const overdueDueDate = new Date('2026-08-16');
     const overdueSurcharge = Math.round(calcWater.totalAmount * 0.05);
 
@@ -273,7 +308,7 @@ const seedDatabase = async () => {
       unitsConsumed: 120,
       energyCharge: calcWater.energyCharge,
       fixedCharge: calcWater.fixedCharge,
-      surcharge: overdueSurcharge, // 5% late surcharge applied
+      surcharge: overdueSurcharge,
       totalAmount: calcWater.totalAmount + overdueSurcharge,
       dueDate: overdueDueDate,
       status: 'UNPAID',
@@ -281,8 +316,8 @@ const seedDatabase = async () => {
     });
 
     console.log('=======================================================');
-    console.log(' Database Seeding Completed Successfully!');
-    console.log(' Demo Accounts Created:');
+    console.log(` Database Seeding into [${targetDbName}] Completed!`);
+    console.log(' Demo Accounts Ready:');
     console.log('   👑 Admin:        admin@example.com    / Admin@123');
     console.log('   📟 Meter Reader: reader@example.com   / Reader@123');
     console.log('   👤 Consumer:     consumer@example.com / Consumer@123');
@@ -292,7 +327,7 @@ const seedDatabase = async () => {
 
     process.exit(0);
   } catch (err) {
-    console.error('Error seeding database:', err);
+    console.error('Error during data population:', err);
     process.exit(1);
   }
 };
