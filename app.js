@@ -6,9 +6,6 @@ const MongoStore = require('connect-mongo');
 const methodOverride = require('method-override');
 const connectDB = require('./config/db');
 
-// Connect to Database
-connectDB();
-
 const app = express();
 
 // View Engine Setup (EJS)
@@ -22,14 +19,13 @@ app.use(methodOverride('_method'));
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Session Configuration
-const mongoUrl = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/utilityBilling';
 app.use(
   session({
     secret: process.env.SESSION_SECRET || 'utility_billing_secret_super_secure',
     resave: false,
     saveUninitialized: false,
     store: MongoStore.create({
-      mongoUrl: mongoUrl,
+      clientPromise: require('mongoose').connection.asPromise().then(c => c.getClient()),
       collectionName: 'sessions',
       ttl: 24 * 60 * 60 // 1 day
     }),
@@ -105,11 +101,17 @@ app.use((err, req, res, next) => {
 });
 
 // Start Server
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`=======================================================`);
-  console.log(` Smart Utility Billing & Meter Management System`);
-  console.log(` Server running on http://localhost:${PORT}`);
-  console.log(` Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`=======================================================`);
-});
+const startServer = async () => {
+  await connectDB();
+
+  const PORT = process.env.PORT || 3000;
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`=======================================================`);
+    console.log(` Smart Utility Billing & Meter Management System`);
+    console.log(` Server running on http://localhost:${PORT}`);
+    console.log(` Environment: ${process.env.NODE_ENV || 'development'}`);
+    console.log(`=======================================================`);
+  });
+};
+
+startServer();
