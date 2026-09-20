@@ -1,0 +1,129 @@
+<%- include('../partials/header') %>
+
+<div class="app-container">
+  <%- include('../partials/sidebar') %>
+
+  <div class="app-main">
+    <%- include('../partials/navbar') %>
+
+    <div class="content-body">
+      <!-- Flash Alerts -->
+      <% if (errorMessage) { %>
+        <div class="alert alert-danger">
+          <span><%= errorMessage %></span>
+          <button type="button" class="alert-close">&times;</button>
+        </div>
+      <% } %>
+      <% if (successMessage) { %>
+        <div class="alert alert-success">
+          <span><%= successMessage %></span>
+          <button type="button" class="alert-close">&times;</button>
+        </div>
+      <% } %>
+
+      <!-- Consumption Chart -->
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title">📊 Utility Consumption Trend</h3>
+        </div>
+        <div class="card-body">
+          <canvas id="consumerConsumptionChart" height="120"></canvas>
+        </div>
+      </div>
+
+      <!-- Consumption Table -->
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title">📈 Meter Reading & Consumption Log</h3>
+          <span style="font-size: 0.88rem; color: var(--gray-500);">Consumer: <strong><%= consumer.name %> (<%= consumer.consumerId %>)</strong></span>
+        </div>
+
+        <div class="card-body" style="padding: 0;">
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Month & Year</th>
+                  <th>Previous Reading</th>
+                  <th>Current Reading</th>
+                  <th>Units Consumed</th>
+                  <th>Reading Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% if (readings && readings.length > 0) { %>
+                  <% readings.forEach(r => { %>
+                    <tr>
+                      <td><strong><%= r.month %> <%= r.year %></strong></td>
+                      <td><%= r.previousReading %></td>
+                      <td><strong><%= r.currentReading %></strong></td>
+                      <td>
+                        <span class="badge badge-active">+<%= r.unitsConsumed %> units</span>
+                      </td>
+                      <td><%= new Date(r.readingDate).toLocaleDateString() %></td>
+                    </tr>
+                  <% }) %>
+                <% } else { %>
+                  <tr>
+                    <td colspan="5" style="text-align: center; padding: 30px; color: var(--gray-500);">
+                      No reading history recorded yet.
+                    </td>
+                  </tr>
+                <% } %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const ctx = document.getElementById('consumerConsumptionChart');
+    if (!ctx) return;
+
+    <% 
+      // Reverse readings so chart displays chronologically from past to present
+      const chronological = [...readings].reverse();
+      const chartLabels = chronological.map(r => `${r.month} ${r.year}`);
+      const chartUnits = chronological.map(r => r.unitsConsumed);
+    %>
+
+    const labels = <%- JSON.stringify(chartLabels.length ? chartLabels : ['Current Period']) %>;
+    const data = <%- JSON.stringify(chartUnits.length ? chartUnits : [0]) %>;
+
+    new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'Units Consumed',
+          data: data,
+          borderColor: '#2563eb',
+          backgroundColor: 'rgba(37, 99, 235, 0.1)',
+          fill: true,
+          tension: 0.3,
+          pointBackgroundColor: '#2563eb',
+          pointRadius: 5
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { position: 'top' }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            title: { display: true, text: 'Consumption Units' }
+          }
+        }
+      }
+    });
+  });
+</script>
+
+<%- include('../partials/footer') %>

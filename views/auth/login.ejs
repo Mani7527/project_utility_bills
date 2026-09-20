@@ -1,0 +1,79 @@
+<%- include('../partials/header') %>
+
+<div class="auth-wrapper">
+  <div class="auth-card">
+    <div class="auth-header">
+      <div style="font-size: 2.5rem; margin-bottom: 8px;">⚡</div>
+      <h1>Utility Portal Login</h1>
+      <p>Smart Utility Billing & Meter Management System</p>
+    </div>
+
+    <!-- Alert Messages -->
+    <% if (errorMessage) { %>
+      <div class="alert alert-danger">
+        <span><%= errorMessage %></span>
+        <button type="button" class="alert-close">&times;</button>
+      </div>
+    <% } %>
+    <% if (successMessage) { %>
+      <div class="alert alert-success">
+        <span><%= successMessage %></span>
+        <button type="button" class="alert-close">&times;</button>
+      </div>
+    <% } %>
+
+    <!-- Demo Quick-Fill Helpers for Testing / Presentation -->
+    <div class="demo-credentials-box">
+      <h4>Demo Accounts (Click to autofill):</h4>
+      <div class="demo-buttons">
+        <button type="button" class="btn-demo" data-email="admin@example.com" data-pass="Admin@123">
+          👑 Admin
+        </button>
+        <button type="button" class="btn-demo" data-email="reader@example.com" data-pass="Reader@123">
+          📟 Meter Reader
+        </button>
+        <button type="button" class="btn-demo" data-email="consumer@example.com" data-pass="Consumer@123">
+          👤 Consumer
+        </button>
+      </div>
+    </div>
+
+    <!-- Login Form -->
+    <form action="/auth/login" method="POST">
+      <div class="form-group">
+        <label class="form-label" for="loginEmail">Email Address</label>
+        <input
+          type="email"
+          id="loginEmail"
+          name="email"
+          class="form-control"
+          placeholder="name@example.com"
+          required
+          autofocus
+        />
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="loginPassword">Password</label>
+        <input
+          type="password"
+          id="loginPassword"
+          name="password"
+          class="form-control"
+          placeholder="••••••••"
+          required
+        />
+      </div>
+
+      <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 10px;">
+        Sign In to Portal
+      </button>
+    </form>
+
+    <div style="margin-top: 24px; text-align: center; font-size: 0.88rem; color: var(--gray-600);">
+      New Consumer? <a href="/auth/register" style="color: var(--secondary); font-weight: 600; text-decoration: none;">Register connection here</a>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>

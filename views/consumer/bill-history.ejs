@@ -1,0 +1,98 @@
+<%- include('../partials/header') %>
+
+<div class="app-container">
+  <%- include('../partials/sidebar') %>
+
+  <div class="app-main">
+    <%- include('../partials/navbar') %>
+
+    <div class="content-body">
+      <!-- Flash Alerts -->
+      <% if (errorMessage) { %>
+        <div class="alert alert-danger">
+          <span><%= errorMessage %></span>
+          <button type="button" class="alert-close">&times;</button>
+        </div>
+      <% } %>
+      <% if (successMessage) { %>
+        <div class="alert alert-success">
+          <span><%= successMessage %></span>
+          <button type="button" class="alert-close">&times;</button>
+        </div>
+      <% } %>
+
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title">🧾 Utility Invoicing History</h3>
+          <span style="font-size: 0.88rem; color: var(--gray-500);">Consumer ID: <strong><%= consumer.consumerId %></strong></span>
+        </div>
+
+        <div class="card-body" style="padding: 0;">
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Bill ID</th>
+                  <th>Billing Period</th>
+                  <th>Units Consumed</th>
+                  <th>Energy Charge</th>
+                  <th>Fixed Charge</th>
+                  <th>Surcharge</th>
+                  <th>Total Amount</th>
+                  <th>Due Date</th>
+                  <th>Status</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% if (bills && bills.length > 0) { %>
+                  <% bills.forEach(b => { %>
+                    <tr>
+                      <td><strong>#<%= b.billId %></strong></td>
+                      <td><%= b.billingMonth %> <%= b.billingYear %></td>
+                      <td><strong><%= b.unitsConsumed %></strong> units</td>
+                      <td>₹<%= b.energyCharge %></td>
+                      <td>₹<%= b.fixedCharge %></td>
+                      <td>
+                        <% if (b.surcharge > 0) { %>
+                          <span style="color: var(--status-unpaid); font-weight: 600;">+₹<%= b.surcharge %></span>
+                        <% } else { %>
+                          <span style="color: var(--gray-400);">₹0</span>
+                        <% } %>
+                      </td>
+                      <td><strong style="color: var(--primary);">₹<%= b.totalAmount %></strong></td>
+                      <td><%= new Date(b.dueDate).toLocaleDateString() %></td>
+                      <td>
+                        <span class="badge <%= b.status === 'PAID' ? 'badge-paid' : 'badge-unpaid' %>">
+                          <%= b.status %>
+                        </span>
+                        <% if (b.paymentDate) { %>
+                          <div style="font-size: 0.72rem; color: var(--gray-500); margin-top: 2px;">
+                            Paid on <%= new Date(b.paymentDate).toLocaleDateString() %>
+                          </div>
+                        <% } %>
+                      </td>
+                      <td>
+                        <a href="/bills/<%= b._id %>" class="btn btn-outline-primary btn-sm">
+                          View Invoice
+                        </a>
+                      </td>
+                    </tr>
+                  <% }) %>
+                <% } else { %>
+                  <tr>
+                    <td colspan="10" style="text-align: center; padding: 30px; color: var(--gray-500);">
+                      No bills found for this account.
+                    </td>
+                  </tr>
+                <% } %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>

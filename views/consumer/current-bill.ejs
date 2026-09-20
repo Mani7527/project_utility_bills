@@ -1,0 +1,208 @@
+<%- include('../partials/header') %>
+
+<div class="app-container">
+  <%- include('../partials/sidebar') %>
+
+  <div class="app-main">
+    <%- include('../partials/navbar') %>
+
+    <div class="content-body">
+      <!-- Flash Alerts -->
+      <% if (errorMessage) { %>
+        <div class="alert alert-danger">
+          <span><%= errorMessage %></span>
+          <button type="button" class="alert-close">&times;</button>
+        </div>
+      <% } %>
+      <% if (successMessage) { %>
+        <div class="alert alert-success">
+          <span><%= successMessage %></span>
+          <button type="button" class="alert-close">&times;</button>
+        </div>
+      <% } %>
+
+      <div style="margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center;">
+        <a href="javascript:history.back()" class="btn btn-secondary btn-sm">&larr; Back</a>
+        <button onclick="window.print()" class="btn btn-secondary btn-sm">🖨️ Print / Save PDF</button>
+      </div>
+
+      <!-- Professional Utility Bill Invoice Container -->
+      <div class="invoice-wrapper">
+        <!-- Invoice Top Header -->
+        <div class="invoice-header">
+          <div class="invoice-brand">
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+              <span style="font-size: 1.6rem;">⚡</span>
+              <h2>UTILITY BILL</h2>
+            </div>
+            <p>Smart Utility Services & Meter Management Board</p>
+            <p style="font-size: 0.78rem; color: var(--gray-400);">Official Assessment of Public Utility Consumption</p>
+          </div>
+
+          <div class="invoice-number-box">
+            <h3>Bill #<%= bill.billId %></h3>
+            <div style="margin-top: 6px;">
+              <span class="badge <%= bill.status === 'PAID' ? 'badge-paid' : 'badge-unpaid' %>" style="font-size: 0.88rem; padding: 6px 14px;">
+                STATUS: <%= bill.status %>
+              </span>
+            </div>
+            <div style="font-size: 0.8rem; color: var(--gray-500); margin-top: 6px;">
+              Generated: <%= new Date(bill.createdAt).toLocaleDateString() %>
+            </div>
+          </div>
+        </div>
+
+        <!-- Consumer & Meter Details Grid -->
+        <div class="invoice-details-grid">
+          <div class="invoice-info-card">
+            <h4>Consumer Information</h4>
+            <div class="info-item">
+              <span class="label">Consumer ID:</span>
+              <span class="val"><%= bill.consumerId ? bill.consumerId.consumerId : 'N/A' %></span>
+            </div>
+            <div class="info-item">
+              <span class="label">Full Name:</span>
+              <span class="val"><%= bill.consumerId ? bill.consumerId.name : 'Unknown' %></span>
+            </div>
+            <div class="info-item">
+              <span class="label">Billing Address:</span>
+              <span class="val"><%= bill.consumerId ? bill.consumerId.address : 'N/A' %></span>
+            </div>
+            <div class="info-item">
+              <span class="label">Connection Type:</span>
+              <span class="val">
+                <span class="badge <%= bill.consumerId && bill.consumerId.connectionType === 'Water' ? 'badge-water' : 'badge-electricity' %>">
+                  <%= bill.consumerId ? bill.consumerId.connectionType : 'Electricity' %>
+                </span>
+              </span>
+            </div>
+          </div>
+
+          <div class="invoice-info-card">
+            <h4>Billing & Meter Details</h4>
+            <div class="info-item">
+              <span class="label">Meter Number:</span>
+              <span class="val"><%= bill.meterId ? bill.meterId.meterNumber : 'N/A' %></span>
+            </div>
+            <div class="info-item">
+              <span class="label">Billing Period:</span>
+              <span class="val"><%= bill.billingMonth %> <%= bill.billingYear %></span>
+            </div>
+            <div class="info-item">
+              <span class="label">Payment Due Date:</span>
+              <span class="val" style="color: <%= new Date() > new Date(bill.dueDate) && bill.status === 'UNPAID' ? 'var(--status-unpaid)' : 'inherit' %>;">
+                <%= new Date(bill.dueDate).toLocaleDateString() %>
+              </span>
+            </div>
+            <div class="info-item">
+              <span class="label">Payment Date:</span>
+              <span class="val"><%= bill.paymentDate ? new Date(bill.paymentDate).toLocaleDateString() : 'Pending' %></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Consumption Reading Banner -->
+        <div class="reading-highlight-banner">
+          <div class="reading-item">
+            <div class="r-lbl">Previous Reading</div>
+            <div class="r-val"><%= bill.previousReading %></div>
+          </div>
+          <div class="reading-item">
+            <div class="r-lbl">Current Reading</div>
+            <div class="r-val"><%= bill.currentReading %></div>
+          </div>
+          <div class="reading-item">
+            <div class="r-lbl">Net Units Consumed</div>
+            <div class="r-val" style="color: var(--secondary);"><%= bill.unitsConsumed %> units</div>
+          </div>
+        </div>
+
+        <!-- Step-by-Step Slab-Wise Bill Breakdown -->
+        <h4 style="font-size: 0.92rem; font-weight: 700; color: var(--gray-800); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px;">
+          📊 Slab-Wise Tariff Calculation Breakdown
+        </h4>
+
+        <table class="data-table" style="margin-bottom: 20px;">
+          <thead>
+            <tr>
+              <th>Consumption Slab</th>
+              <th>Billed Units</th>
+              <th>Tariff Rate</th>
+              <th style="text-align: right;">Slab Amount (₹)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% if (bill.breakdown && bill.breakdown.length > 0) { %>
+              <% bill.breakdown.forEach(s => { %>
+                <tr>
+                  <td><strong><%= s.slabRange %></strong></td>
+                  <td><%= s.unitsBilled %> units</td>
+                  <td>₹<%= s.rate %> / unit</td>
+                  <td style="text-align: right;">₹<%= s.amount.toFixed(2) %></td>
+                </tr>
+              <% }) %>
+            <% } else { %>
+              <tr>
+                <td>Standard Consumption</td>
+                <td><%= bill.unitsConsumed %> units</td>
+                <td>Applicable Tariff</td>
+                <td style="text-align: right;">₹<%= bill.energyCharge.toFixed(2) %></td>
+              </tr>
+            <% } %>
+          </tbody>
+        </table>
+
+        <!-- Total Breakdown Box -->
+        <div class="bill-total-summary">
+          <div class="total-breakdown-box">
+            <div class="total-row">
+              <span style="color: var(--gray-600);">Total Energy Charges:</span>
+              <strong>₹<%= bill.energyCharge.toFixed(2) %></strong>
+            </div>
+            <div class="total-row">
+              <span style="color: var(--gray-600);">Monthly Fixed Charges:</span>
+              <strong>₹<%= bill.fixedCharge.toFixed(2) %></strong>
+            </div>
+            
+            <% if (bill.surcharge > 0) { %>
+              <div class="total-row" style="color: var(--status-unpaid);">
+                <span>Late Payment Surcharge (5%):</span>
+                <strong>+₹<%= bill.surcharge.toFixed(2) %></strong>
+              </div>
+            <% } %>
+
+            <div class="total-row grand-total-row">
+              <span>Total Payable Amount:</span>
+              <span>₹<%= bill.totalAmount.toFixed(2) %></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bottom Actions & College Project Disclaimer -->
+        <div class="invoice-actions">
+          <div class="simulation-note">
+            ⚠️ <strong>College Project Notice:</strong> Payment gateway processing is simulated. Clicking "Pay Bill" updates invoice status to PAID without real financial debit.
+          </div>
+
+          <div>
+            <% if (bill.status === 'UNPAID') { %>
+              <form action="/bills/<%= bill._id %>/pay" method="POST">
+                <button type="submit" class="btn btn-success btn-lg">
+                  💳 MARK AS PAID
+                </button>
+              </form>
+            <% } else { %>
+              <div style="display: flex; align-items: center; gap: 8px; color: var(--status-paid); font-weight: 700;">
+                <span>✅ Bill Fully Settled</span>
+                <span style="font-size: 0.8rem; color: var(--gray-500);">(<%= new Date(bill.paymentDate).toLocaleDateString() %>)</span>
+              </div>
+            <% } %>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>

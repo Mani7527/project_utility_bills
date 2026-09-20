@@ -1,0 +1,178 @@
+<%- include('../partials/header') %>
+
+<div class="app-container">
+  <%- include('../partials/sidebar') %>
+
+  <div class="app-main">
+    <%- include('../partials/navbar') %>
+
+    <div class="content-body">
+      <!-- Flash Alerts -->
+      <% if (errorMessage) { %>
+        <div class="alert alert-danger">
+          <span><%= errorMessage %></span>
+          <button type="button" class="alert-close">&times;</button>
+        </div>
+      <% } %>
+      <% if (successMessage) { %>
+        <div class="alert alert-success">
+          <span><%= successMessage %></span>
+          <button type="button" class="alert-close">&times;</button>
+        </div>
+      <% } %>
+
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+        <div>
+          <h2 style="font-size: 1.3rem; font-weight: 800; color: var(--gray-900);">Configured Tariff Slabs</h2>
+          <p style="color: var(--gray-500); font-size: 0.88rem;">Manage progressive slab-wise billing rates and fixed charges stored in MongoDB.</p>
+        </div>
+        <button class="btn btn-primary btn-sm" data-modal-target="addTariffModal">
+          + Create New Tariff Plan
+        </button>
+      </div>
+
+      <!-- Tariffs Grid -->
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 24px; margin-bottom: 32px;">
+        <% if (tariffs && tariffs.length > 0) { %>
+          <% tariffs.forEach(t => { %>
+            <div class="card" style="margin-bottom: 0;">
+              <div class="card-header">
+                <div>
+                  <h3 class="card-title">
+                    <%= t.name %>
+                    <% if (t.isDefault) { %>
+                      <span class="badge badge-active" style="font-size: 0.65rem;">DEFAULT</span>
+                    <% } %>
+                  </h3>
+                  <span class="badge <%= t.connectionType === 'Water' ? 'badge-water' : 'badge-electricity' %>" style="margin-top: 4px;">
+                    <%= t.connectionType %> Utility
+                  </span>
+                </div>
+
+                <% if (!t.isDefault) { %>
+                  <form action="/admin/tariffs/<%= t._id %>/delete" method="POST" onsubmit="return confirm('Delete this tariff plan?');">
+                    <button type="submit" class="btn btn-danger btn-sm" title="Delete tariff">Delete</button>
+                  </form>
+                <% } %>
+              </div>
+
+              <div class="card-body">
+                <div style="margin-bottom: 14px; display: flex; justify-content: space-between; font-size: 0.9rem;">
+                  <span style="color: var(--gray-600);">Monthly Fixed Charge:</span>
+                  <strong style="color: var(--primary);">₹<%= t.fixedCharge %></strong>
+                </div>
+
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>Consumption Range</th>
+                      <th>Rate Per Unit</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <% t.slabs.forEach(s => { %>
+                      <tr>
+                        <td>
+                          <%= s.from %> – <%= s.to === null ? 'Above' : s.to %> units
+                        </td>
+                        <td><strong>₹<%= s.rate %> / unit</strong></td>
+                      </tr>
+                    <% }) %>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          <% }) %>
+        <% } else { %>
+          <div class="card" style="grid-column: 1 / -1; padding: 40px; text-align: center;">
+            <p style="color: var(--gray-500);">No tariffs found. Default tariffs will be created automatically.</p>
+          </div>
+        <% } %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Add Tariff Modal -->
+<div class="modal-overlay" id="addTariffModal">
+  <div class="modal-dialog" style="max-width: 650px;">
+    <div class="modal-header">
+      <h3 style="font-size: 1.15rem; font-weight: 700;">Create New Tariff Plan</h3>
+      <button class="alert-close" data-modal-close>&times;</button>
+    </div>
+    <form action="/admin/tariffs" method="POST">
+      <div class="modal-body">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Plan Name *</label>
+            <input type="text" name="name" class="form-control" required placeholder="Commercial Electricity Tariff" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Connection Type</label>
+            <select name="connectionType" class="form-select">
+              <option value="Electricity" selected>Electricity</option>
+              <option value="Water">Water</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Monthly Fixed Charge (₹) *</label>
+          <input type="number" name="fixedCharge" class="form-control" required value="100" min="0" />
+        </div>
+
+        <div style="margin-top: 20px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
+          <label class="form-label" style="margin-bottom: 0;">Slab Tiers (From - To - Rate ₹)</label>
+          <button type="button" id="addSlabRowBtn" class="btn btn-secondary btn-sm">+ Add Slab</button>
+        </div>
+
+        <div id="slabsContainer">
+          <div class="form-row" style="margin-bottom: 10px;">
+            <input type="number" name="slabFrom" class="form-control" placeholder="From (e.g. 0)" value="0" required />
+            <input type="number" name="slabTo" class="form-control" placeholder="To (e.g. 100)" value="100" />
+            <input type="number" step="0.5" name="slabRate" class="form-control" placeholder="Rate ₹ (e.g. 3)" value="3" required />
+          </div>
+          <div class="form-row" style="margin-bottom: 10px;">
+            <input type="number" name="slabFrom" class="form-control" placeholder="From (e.g. 101)" value="101" required />
+            <input type="number" name="slabTo" class="form-control" placeholder="To (e.g. 200)" value="200" />
+            <input type="number" step="0.5" name="slabRate" class="form-control" placeholder="Rate ₹ (e.g. 5)" value="5" required />
+          </div>
+          <div class="form-row" style="margin-bottom: 10px;">
+            <input type="number" name="slabFrom" class="form-control" placeholder="From (e.g. 201)" value="201" required />
+            <input type="number" name="slabTo" class="form-control" placeholder="Leave blank for 201+" value="" />
+            <input type="number" step="0.5" name="slabRate" class="form-control" placeholder="Rate ₹ (e.g. 7)" value="7" required />
+          </div>
+        </div>
+        <p class="form-help">Tip: Leave the "To" field empty on the last slab to indicate "and above" (infinity).</p>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-modal-close>Cancel</button>
+        <button type="submit" class="btn btn-primary">Save Tariff Plan</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const addSlabBtn = document.getElementById('addSlabRowBtn');
+    const slabsContainer = document.getElementById('slabsContainer');
+
+    if (addSlabBtn && slabsContainer) {
+      addSlabBtn.addEventListener('click', () => {
+        const row = document.createElement('div');
+        row.className = 'form-row';
+        row.style.marginBottom = '10px';
+        row.innerHTML = `
+          <input type="number" name="slabFrom" class="form-control" placeholder="From" required />
+          <input type="number" name="slabTo" class="form-control" placeholder="To (blank for max+)" />
+          <input type="number" step="0.5" name="slabRate" class="form-control" placeholder="Rate ₹" required />
+        `;
+        slabsContainer.appendChild(row);
+      });
+    }
+  });
+</script>
+
+<%- include('../partials/footer') %>

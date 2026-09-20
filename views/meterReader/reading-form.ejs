@@ -1,0 +1,134 @@
+<%- include('../partials/header') %>
+
+<div class="app-container">
+  <%- include('../partials/sidebar') %>
+
+  <div class="app-main">
+    <%- include('../partials/navbar') %>
+
+    <div class="content-body">
+      <!-- Flash Alerts -->
+      <% if (errorMessage) { %>
+        <div class="alert alert-danger" id="serverAlert">
+          <span><%= errorMessage %></span>
+          <button type="button" class="alert-close">&times;</button>
+        </div>
+      <% } %>
+      <% if (successMessage) { %>
+        <div class="alert alert-success">
+          <span><%= successMessage %></span>
+          <button type="button" class="alert-close">&times;</button>
+        </div>
+      <% } %>
+
+      <!-- Dynamic Live Validation Warning Alert -->
+      <div class="alert alert-danger" id="readingValidationAlert" style="display: none; font-weight: 600;">
+        Invalid reading: New meter reading cannot be lower than the previous reading.
+      </div>
+
+      <div style="max-width: 680px; margin: 0 auto;">
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">✍️ Record Monthly Meter Reading</h3>
+          </div>
+
+          <div class="card-body">
+            <form action="/meter-reader/readings" method="POST" id="meterReadingForm">
+              <!-- Meter Selection -->
+              <div class="form-group">
+                <label class="form-label" for="meterSelect">Select Meter Number *</label>
+                <select name="meterId" id="meterSelect" class="form-select" required>
+                  <option value="">-- Choose Installed Meter --</option>
+                  <% meters.forEach(m => { %>
+                    <option value="<%= m._id %>" <%= selectedMeterId === m._id.toString() ? 'selected' : '' %>>
+                      <%= m.meterNumber %> - <%= m.consumerId ? m.consumerId.name : 'Unassigned' %> (<%= m.connectionType %>)
+                    </option>
+                  <% }) %>
+                </select>
+                <div class="form-help">Select the meter number physically engraved on the consumer's meter unit.</div>
+              </div>
+
+              <!-- Meter Inspection Banner -->
+              <div class="reading-highlight-banner" style="margin-bottom: 24px;">
+                <div class="reading-item">
+                  <div class="r-lbl">Assigned Consumer</div>
+                  <div class="r-val" id="consumerNameDisplay" style="font-size: 1.05rem; font-weight: 700;">--</div>
+                </div>
+                <div class="reading-item">
+                  <div class="r-lbl">Previous Recorded Reading</div>
+                  <div class="r-val" id="prevReadingDisplay">--</div>
+                  <input type="hidden" id="prevReadingInput" value="0" />
+                </div>
+                <div class="reading-item">
+                  <div class="r-lbl">Calculated Units</div>
+                  <div class="r-val" id="unitsConsumedDisplay" style="color: var(--secondary);">--</div>
+                </div>
+              </div>
+
+              <!-- Reading Input -->
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label" for="currentReadingInput">Current Meter Reading *</label>
+                  <input
+                    type="number"
+                    name="currentReading"
+                    id="currentReadingInput"
+                    class="form-control"
+                    placeholder="Enter current reading"
+                    required
+                    min="0"
+                  />
+                  <div class="form-help">Must be equal to or higher than previous reading.</div>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">Reading Date *</label>
+                  <input
+                    type="date"
+                    name="readingDate"
+                    class="form-control"
+                    value="<%= new Date().toISOString().split('T')[0] %>"
+                    required
+                  />
+                </div>
+              </div>
+
+              <!-- Billing Period -->
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label">Billing Month *</label>
+                  <select name="month" class="form-select" required>
+                    <% ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'].forEach(m => { %>
+                      <option value="<%= m %>" <%= m === currentMonth ? 'selected' : '' %>><%= m %></option>
+                    <% }) %>
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">Billing Year *</label>
+                  <input
+                    type="number"
+                    name="year"
+                    class="form-control"
+                    value="<%= currentYear %>"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div style="margin-top: 24px; display: flex; justify-content: flex-end; gap: 12px;">
+                <a href="/meter-reader/dashboard" class="btn btn-secondary">Cancel</a>
+                <button type="submit" id="submitReadingBtn" class="btn btn-primary">
+                  Validate & Generate Consumer Bill
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>

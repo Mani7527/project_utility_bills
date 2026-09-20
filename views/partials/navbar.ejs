@@ -1,0 +1,22 @@
+<header class="top-navbar">
+  <div style="display: flex; align-items: center; gap: 14px;">
+    <button id="sidebarMobileToggle" class="btn btn-secondary btn-sm" style="display: none; padding: 6px 10px;">☰</button>
+    <h1 class="navbar-title"><%= typeof title !== 'undefined' ? title : 'Dashboard' %></h1>
+  </div>
+  
+  <div class="navbar-actions">
+    <% if (user) { %>
+      <div style="display: flex; align-items: center; gap: 10px; font-size: 0.88rem; color: var(--gray-600);">
+        <span>Logged in as: <strong><%= user.name %></strong></span>
+        <span class="badge <%= user.role === 'admin' ? 'badge-electricity' : (user.role === 'meter_reader' ? 'badge-water' : 'badge-paid') %>">
+          <%= user.role %>
+        </span>
+      </div>
+      <a href="/auth/logout" class="btn btn-secondary btn-sm" title="Log out from system">
+        Logout ⇥
+      </a>
+    <% } else { %>
+      <a href="/auth/login" class="btn btn-primary btn-sm">Login</a>
+    <% } %>
+  </div>
+</header>

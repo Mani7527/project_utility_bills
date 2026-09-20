@@ -1,0 +1,244 @@
+<%- include('../partials/header') %>
+
+<div class="app-container">
+  <%- include('../partials/sidebar') %>
+
+  <div class="app-main">
+    <%- include('../partials/navbar') %>
+
+    <div class="content-body">
+      <!-- Flash Alerts -->
+      <% if (errorMessage) { %>
+        <div class="alert alert-danger">
+          <span><%= errorMessage %></span>
+          <button type="button" class="alert-close">&times;</button>
+        </div>
+      <% } %>
+      <% if (successMessage) { %>
+        <div class="alert alert-success">
+          <span><%= successMessage %></span>
+          <button type="button" class="alert-close">&times;</button>
+        </div>
+      <% } %>
+
+      <!-- Metric Cards Grid -->
+      <div class="metrics-grid">
+        <div class="stat-card">
+          <div class="stat-info">
+            <span class="stat-label">Total Consumers</span>
+            <span class="stat-value"><%= stats.totalConsumers %></span>
+            <span class="stat-sub">Registered accounts</span>
+          </div>
+          <div class="stat-icon-wrapper icon-blue">👥</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-info">
+            <span class="stat-label">Active Meters</span>
+            <span class="stat-value"><%= stats.totalMeters %></span>
+            <span class="stat-sub">Installed meters</span>
+          </div>
+          <div class="stat-icon-wrapper icon-purple">📟</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-info">
+            <span class="stat-label">Bills Generated</span>
+            <span class="stat-value"><%= stats.billsGenerated %></span>
+            <span class="stat-sub"><%= stats.totalUnitsBilled %> units billed</span>
+          </div>
+          <div class="stat-icon-wrapper icon-orange">🧾</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-info">
+            <span class="stat-label">Paid Bills</span>
+            <span class="stat-value" style="color: var(--status-paid);"><%= stats.paidBillsCount %></span>
+            <span class="stat-sub">₹<%= stats.totalRevenuePaid.toLocaleString() %> collected</span>
+          </div>
+          <div class="stat-icon-wrapper icon-green">✅</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-info">
+            <span class="stat-label">Unpaid Bills</span>
+            <span class="stat-value" style="color: var(--status-unpaid);"><%= stats.unpaidBillsCount %></span>
+            <span class="stat-sub">₹<%= stats.totalOutstanding.toLocaleString() %> outstanding</span>
+          </div>
+          <div class="stat-icon-wrapper icon-red">⚠️</div>
+        </div>
+      </div>
+
+      <!-- Charts & Insights Row -->
+      <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px; margin-bottom: 28px;">
+        <!-- Analytics Chart -->
+        <div class="card" style="margin-bottom: 0;">
+          <div class="card-header">
+            <h3 class="card-title">📈 Monthly Utility Billing Analytics</h3>
+          </div>
+          <div class="card-body">
+            <canvas id="adminAnalyticsChart" height="150"></canvas>
+          </div>
+        </div>
+
+        <!-- Top Consumers by Units Consumed -->
+        <div class="card" style="margin-bottom: 0;">
+          <div class="card-header">
+            <h3 class="card-title">🏆 Top Consumers (Units)</h3>
+          </div>
+          <div class="card-body" style="padding: 0;">
+            <% if (topConsumers && topConsumers.length > 0) { %>
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Consumer</th>
+                    <th>Total Units</th>
+                    <th>Billed</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% topConsumers.forEach(tc => { %>
+                    <tr>
+                      <td>
+                        <strong><%= tc.consumer.name %></strong>
+                        <div style="font-size: 0.75rem; color: var(--gray-500);"><%= tc.consumer.consumerId %></div>
+                      </td>
+                      <td><strong><%= tc.totalUnits %></strong></td>
+                      <td>₹<%= tc.totalBilled.toLocaleString() %></td>
+                    </tr>
+                  <% }) %>
+                </tbody>
+              </table>
+            <% } else { %>
+              <div style="padding: 30px; text-align: center; color: var(--gray-500);">
+                No consumption data yet.
+              </div>
+            <% } %>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recent Bills Generated -->
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title">🧾 Recent Bills Generated</h3>
+          <a href="/admin/bills" class="btn btn-secondary btn-sm">View All Bills &rarr;</a>
+        </div>
+        <div class="card-body" style="padding: 0;">
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Bill ID</th>
+                  <th>Consumer</th>
+                  <th>Meter</th>
+                  <th>Month/Year</th>
+                  <th>Units</th>
+                  <th>Amount</th>
+                  <th>Due Date</th>
+                  <th>Status</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% if (recentBills && recentBills.length > 0) { %>
+                  <% recentBills.forEach(b => { %>
+                    <tr>
+                      <td><strong>#<%= b.billId %></strong></td>
+                      <td>
+                        <%= b.consumerId ? b.consumerId.name : 'Unknown' %>
+                        <div style="font-size: 0.75rem; color: var(--gray-500);"><%= b.consumerId ? b.consumerId.consumerId : '' %></div>
+                      </td>
+                      <td><%= b.meterId ? b.meterId.meterNumber : 'N/A' %></td>
+                      <td><%= b.billingMonth %> <%= b.billingYear %></td>
+                      <td><%= b.unitsConsumed %> units</td>
+                      <td><strong>₹<%= b.totalAmount %></strong></td>
+                      <td><%= new Date(b.dueDate).toLocaleDateString() %></td>
+                      <td>
+                        <span class="badge <%= b.status === 'PAID' ? 'badge-paid' : 'badge-unpaid' %>">
+                          <%= b.status %>
+                        </span>
+                      </td>
+                      <td>
+                        <a href="/bills/<%= b._id %>" class="btn btn-outline-primary btn-sm">View Invoice</a>
+                      </td>
+                    </tr>
+                  <% }) %>
+                <% } else { %>
+                  <tr>
+                    <td colspan="9" style="text-align: center; padding: 30px; color: var(--gray-500);">
+                      No bills generated yet.
+                    </td>
+                  </tr>
+                <% } %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Chart Initialization Script -->
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const ctx = document.getElementById('adminAnalyticsChart');
+    if (!ctx) return;
+
+    <% 
+      const labels = monthlyData.map(d => `${d._id.month} ${d._id.year}`);
+      const units = monthlyData.map(d => d.totalUnits);
+      const revenues = monthlyData.map(d => d.totalRevenue);
+    %>
+
+    const chartLabels = <%- JSON.stringify(labels.length ? labels : ['Current Period']) %>;
+    const unitsData = <%- JSON.stringify(units.length ? units : [stats.totalUnitsBilled]) %>;
+    const revenueData = <%- JSON.stringify(revenues.length ? revenues : [stats.totalRevenuePaid + stats.totalOutstanding]) %>;
+
+    new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: chartLabels,
+        datasets: [
+          {
+            label: 'Units Consumed',
+            data: unitsData,
+            backgroundColor: '#38bdf8',
+            borderRadius: 6,
+            yAxisID: 'y'
+          },
+          {
+            label: 'Revenue Billed (₹)',
+            data: revenueData,
+            backgroundColor: '#1e3a8a',
+            borderRadius: 6,
+            yAxisID: 'y1'
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { position: 'top' }
+        },
+        scales: {
+          y: {
+            type: 'linear',
+            position: 'left',
+            title: { display: true, text: 'Units' }
+          },
+          y1: {
+            type: 'linear',
+            position: 'right',
+            grid: { drawOnChartArea: false },
+            title: { display: true, text: 'Amount (₹)' }
+          }
+        }
+      }
+    });
+  });
+</script>
+
+<%- include('../partials/footer') %>

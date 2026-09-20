@@ -1,0 +1,35 @@
+{
+  "name": "smart-utility-billing-system",
+  "version": "1.0.0",
+  "description": "Smart Utility Billing and Meter Management System - College Project",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js",
+    "dev": "nodemon app.js",
+    "seed": "node seed/seed.js"
+  },
+  "keywords": [
+    "utility",
+    "billing",
+    "meter-management",
+    "nodejs",
+    "express",
+    "mongodb",
+    "ejs"
+  ],
+  "author": "College Project Team",
+  "license": "ISC",
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "connect-mongo": "^5.1.0",
+    "dotenv": "^16.4.7",
+    "ejs": "^3.1.10",
+    "express": "^4.21.2",
+    "express-session": "^1.18.1",
+    "method-override": "^3.0.0",
+    "mongoose": "^8.9.5"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.9"
+  }
+}

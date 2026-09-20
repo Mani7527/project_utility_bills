@@ -1,0 +1,256 @@
+<%- include('../partials/header') %>
+
+<div class="app-container">
+  <%- include('../partials/sidebar') %>
+
+  <div class="app-main">
+    <%- include('../partials/navbar') %>
+
+    <div class="content-body">
+      <!-- Flash Alerts -->
+      <% if (errorMessage) { %>
+        <div class="alert alert-danger">
+          <span><%= errorMessage %></span>
+          <button type="button" class="alert-close">&times;</button>
+        </div>
+      <% } %>
+      <% if (successMessage) { %>
+        <div class="alert alert-success">
+          <span><%= successMessage %></span>
+          <button type="button" class="alert-close">&times;</button>
+        </div>
+      <% } %>
+
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title">👥 Consumer Directory</h3>
+          <button class="btn btn-primary btn-sm" data-modal-target="addConsumerModal">
+            + Add New Consumer
+          </button>
+        </div>
+        <div class="card-body" style="padding: 0;">
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Consumer ID</th>
+                  <th>Name</th>
+                  <th>Contact</th>
+                  <th>Type</th>
+                  <th>Address</th>
+                  <th>Assigned Meter</th>
+                  <th>Tariff Plan</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% if (consumers && consumers.length > 0) { %>
+                  <% consumers.forEach(c => { %>
+                    <tr>
+                      <td><strong><%= c.consumerId %></strong></td>
+                      <td>
+                        <strong><%= c.name %></strong>
+                        <div style="font-size: 0.75rem; color: var(--gray-500);"><%= c.email %></div>
+                      </td>
+                      <td><%= c.phone %></td>
+                      <td>
+                        <span class="badge <%= c.connectionType === 'Water' ? 'badge-water' : 'badge-electricity' %>">
+                          <%= c.connectionType %>
+                        </span>
+                      </td>
+                      <td><%= c.address %></td>
+                      <td>
+                        <% if (c.meterId) { %>
+                          <span class="badge badge-active"><%= c.meterId.meterNumber %></span>
+                        <% } else { %>
+                          <span style="color: var(--gray-400); font-size: 0.82rem;">Unassigned</span>
+                        <% } %>
+                      </td>
+                      <td>
+                        <%= c.tariffId ? c.tariffId.name : 'Default' %>
+                      </td>
+                      <td>
+                        <div style="display: flex; gap: 8px;">
+                          <button
+                            class="btn btn-secondary btn-sm edit-consumer-btn"
+                            data-id="<%= c._id %>"
+                            data-name="<%= c.name %>"
+                            data-email="<%= c.email %>"
+                            data-phone="<%= c.phone %>"
+                            data-address="<%= c.address %>"
+                            data-type="<%= c.connectionType %>"
+                            data-meter="<%= c.meterId ? c.meterId._id : '' %>"
+                            data-tariff="<%= c.tariffId ? c.tariffId._id : '' %>"
+                          >
+                            Edit
+                          </button>
+                          
+                          <form action="/admin/consumers/<%= c._id %>/delete" method="POST" onsubmit="return confirm('Are you sure you want to delete consumer <%= c.consumerId %>?');">
+                            <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                          </form>
+                        </div>
+                      </td>
+                    </tr>
+                  <% }) %>
+                <% } else { %>
+                  <tr>
+                    <td colspan="8" style="text-align: center; padding: 30px; color: var(--gray-500);">
+                      No consumers registered yet. Click "Add New Consumer" above.
+                    </td>
+                  </tr>
+                <% } %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Add Consumer Modal -->
+<div class="modal-overlay" id="addConsumerModal">
+  <div class="modal-dialog">
+    <div class="modal-header">
+      <h3 style="font-size: 1.15rem; font-weight: 700;">Add New Consumer</h3>
+      <button class="alert-close" data-modal-close>&times;</button>
+    </div>
+    <form action="/admin/consumers" method="POST">
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Full Name *</label>
+          <input type="text" name="name" class="form-control" required placeholder="Alice Smith" />
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Email Address *</label>
+            <input type="email" name="email" class="form-control" required placeholder="alice@example.com" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Phone Number *</label>
+            <input type="tel" name="phone" class="form-control" required placeholder="9876543210" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Connection Address *</label>
+          <input type="text" name="address" class="form-control" required placeholder="House 12, Sector 4" />
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Connection Type</label>
+            <select name="connectionType" class="form-select">
+              <option value="Electricity" selected>Electricity</option>
+              <option value="Water">Water</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Initial Password</label>
+            <input type="password" name="password" class="form-control" value="Consumer@123" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Assign Meter (Optional)</label>
+            <select name="meterId" class="form-select">
+              <option value="">-- Select Meter --</option>
+              <% unassignedMeters.forEach(m => { %>
+                <option value="<%= m._id %>"><%= m.meterNumber %> (<%= m.connectionType %>)</option>
+              <% }) %>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Tariff Plan (Optional)</label>
+            <select name="tariffId" class="form-select">
+              <option value="">Default Connection Tariff</option>
+              <% tariffs.forEach(t => { %>
+                <option value="<%= t._id %>"><%= t.name %> (<%= t.connectionType %>)</option>
+              <% }) %>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-modal-close>Cancel</button>
+        <button type="submit" class="btn btn-primary">Create Consumer</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Edit Consumer Modal -->
+<div class="modal-overlay" id="editConsumerModal">
+  <div class="modal-dialog">
+    <div class="modal-header">
+      <h3 style="font-size: 1.15rem; font-weight: 700;">Edit Consumer</h3>
+      <button class="alert-close" data-modal-close>&times;</button>
+    </div>
+    <form id="editConsumerForm" method="POST">
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Full Name *</label>
+          <input type="text" id="editName" name="name" class="form-control" required />
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Email Address *</label>
+            <input type="email" id="editEmail" name="email" class="form-control" required />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Phone Number *</label>
+            <input type="tel" id="editPhone" name="phone" class="form-control" required />
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Connection Address *</label>
+          <input type="text" id="editAddress" name="address" class="form-control" required />
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Connection Type</label>
+            <select id="editType" name="connectionType" class="form-select">
+              <option value="Electricity">Electricity</option>
+              <option value="Water">Water</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Tariff Plan</label>
+            <select id="editTariff" name="tariffId" class="form-select">
+              <option value="">Default Connection Tariff</option>
+              <% tariffs.forEach(t => { %>
+                <option value="<%= t._id %>"><%= t.name %> (<%= t.connectionType %>)</option>
+              <% }) %>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-modal-close>Cancel</button>
+        <button type="submit" class="btn btn-primary">Update Consumer</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const editBtns = document.querySelectorAll('.edit-consumer-btn');
+    const editModal = document.getElementById('editConsumerModal');
+    const editForm = document.getElementById('editConsumerForm');
+
+    editBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.getAttribute('data-id');
+        editForm.action = `/admin/consumers/${id}/edit`;
+        document.getElementById('editName').value = btn.getAttribute('data-name');
+        document.getElementById('editEmail').value = btn.getAttribute('data-email');
+        document.getElementById('editPhone').value = btn.getAttribute('data-phone');
+        document.getElementById('editAddress').value = btn.getAttribute('data-address');
+        document.getElementById('editType').value = btn.getAttribute('data-type');
+        document.getElementById('editTariff').value = btn.getAttribute('data-tariff') || '';
+        editModal.classList.add('active');
+      });
+    });
+  });
+</script>
+
+<%- include('../partials/footer') %>

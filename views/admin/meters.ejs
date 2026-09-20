@@ -1,0 +1,244 @@
+<%- include('../partials/header') %>
+
+<div class="app-container">
+  <%- include('../partials/sidebar') %>
+
+  <div class="app-main">
+    <%- include('../partials/navbar') %>
+
+    <div class="content-body">
+      <!-- Flash Alerts -->
+      <% if (errorMessage) { %>
+        <div class="alert alert-danger">
+          <span><%= errorMessage %></span>
+          <button type="button" class="alert-close">&times;</button>
+        </div>
+      <% } %>
+      <% if (successMessage) { %>
+        <div class="alert alert-success">
+          <span><%= successMessage %></span>
+          <button type="button" class="alert-close">&times;</button>
+        </div>
+      <% } %>
+
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title">📟 Utility Meter Inventory</h3>
+          <button class="btn btn-primary btn-sm" data-modal-target="addMeterModal">
+            + Add New Meter
+          </button>
+        </div>
+        <div class="card-body" style="padding: 0;">
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Meter Number</th>
+                  <th>Utility Type</th>
+                  <th>Assigned Consumer</th>
+                  <th>Installation Date</th>
+                  <th>Last Reading</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% if (meters && meters.length > 0) { %>
+                  <% meters.forEach(m => { %>
+                    <tr>
+                      <td><strong><%= m.meterNumber %></strong></td>
+                      <td>
+                        <span class="badge <%= m.connectionType === 'Water' ? 'badge-water' : 'badge-electricity' %>">
+                          <%= m.connectionType %>
+                        </span>
+                      </td>
+                      <td>
+                        <% if (m.consumerId) { %>
+                          <strong><%= m.consumerId.name %></strong>
+                          <div style="font-size: 0.75rem; color: var(--gray-500);"><%= m.consumerId.consumerId %></div>
+                        <% } else { %>
+                          <span style="color: var(--gray-400); font-size: 0.82rem;">Unassigned</span>
+                        <% } %>
+                      </td>
+                      <td><%= new Date(m.installationDate).toLocaleDateString() %></td>
+                      <td><strong><%= m.lastReading %></strong> units</td>
+                      <td>
+                        <span class="badge <%= m.status === 'Active' ? 'badge-active' : (m.status === 'Faulty' ? 'badge-unpaid' : 'badge-pending') %>">
+                          <%= m.status %>
+                        </span>
+                      </td>
+                      <td>
+                        <div style="display: flex; gap: 8px;">
+                          <button
+                            class="btn btn-secondary btn-sm edit-meter-btn"
+                            data-id="<%= m._id %>"
+                            data-number="<%= m.meterNumber %>"
+                            data-type="<%= m.connectionType %>"
+                            data-reading="<%= m.lastReading %>"
+                            data-status="<%= m.status %>"
+                            data-consumer="<%= m.consumerId ? m.consumerId._id : '' %>"
+                          >
+                            Edit
+                          </button>
+                          
+                          <form action="/admin/meters/<%= m._id %>/delete" method="POST" onsubmit="return confirm('Are you sure you want to delete meter <%= m.meterNumber %>?');">
+                            <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                          </form>
+                        </div>
+                      </td>
+                    </tr>
+                  <% }) %>
+                <% } else { %>
+                  <tr>
+                    <td colspan="7" style="text-align: center; padding: 30px; color: var(--gray-500);">
+                      No meters registered. Click "Add New Meter" above.
+                    </td>
+                  </tr>
+                <% } %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Add Meter Modal -->
+<div class="modal-overlay" id="addMeterModal">
+  <div class="modal-dialog">
+    <div class="modal-header">
+      <h3 style="font-size: 1.15rem; font-weight: 700;">Add New Meter</h3>
+      <button class="alert-close" data-modal-close>&times;</button>
+    </div>
+    <form action="/admin/meters" method="POST">
+      <div class="modal-body">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Meter Number *</label>
+            <input type="text" name="meterNumber" class="form-control" required placeholder="MTR101" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Connection Type</label>
+            <select name="connectionType" class="form-select">
+              <option value="Electricity" selected>Electricity</option>
+              <option value="Water">Water</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Initial Meter Reading</label>
+            <input type="number" name="lastReading" class="form-control" value="0" min="0" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Operating Status</label>
+            <select name="status" class="form-select">
+              <option value="Active" selected>Active</option>
+              <option value="Inactive">Inactive</option>
+              <option value="Faulty">Faulty</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Assign to Consumer (Optional)</label>
+          <select name="consumerId" class="form-select">
+            <option value="">-- Leave Unassigned --</option>
+            <% unassignedConsumers.forEach(c => { %>
+              <option value="<%= c._id %>"><%= c.name %> (<%= c.consumerId %> - <%= c.connectionType %>)</option>
+            <% }) %>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-modal-close>Cancel</button>
+        <button type="submit" class="btn btn-primary">Create Meter</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Edit Meter Modal -->
+<div class="modal-overlay" id="editMeterModal">
+  <div class="modal-dialog">
+    <div class="modal-header">
+      <h3 style="font-size: 1.15rem; font-weight: 700;">Edit Meter <span id="editMeterTitle"></span></h3>
+      <button class="alert-close" data-modal-close>&times;</button>
+    </div>
+    <form id="editMeterForm" method="POST">
+      <div class="modal-body">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Connection Type</label>
+            <select id="editMeterType" name="connectionType" class="form-select">
+              <option value="Electricity">Electricity</option>
+              <option value="Water">Water</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Current Meter Reading</label>
+            <input type="number" id="editMeterReading" name="lastReading" class="form-control" min="0" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Operating Status</label>
+            <select id="editMeterStatus" name="status" class="form-select">
+              <option value="Active">Active</option>
+              <option value="Inactive">Inactive</option>
+              <option value="Faulty">Faulty</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Assigned Consumer</label>
+            <select id="editMeterConsumer" name="consumerId" class="form-select">
+              <option value="">-- Unassigned --</option>
+              <% unassignedConsumers.forEach(c => { %>
+                <option value="<%= c._id %>"><%= c.name %> (<%= c.consumerId %>)</option>
+              <% }) %>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-modal-close>Cancel</button>
+        <button type="submit" class="btn btn-primary">Save Changes</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const editBtns = document.querySelectorAll('.edit-meter-btn');
+    const editModal = document.getElementById('editMeterModal');
+    const editForm = document.getElementById('editMeterForm');
+
+    editBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.getAttribute('data-id');
+        const num = btn.getAttribute('data-number');
+        editForm.action = `/admin/meters/${id}/edit`;
+        document.getElementById('editMeterTitle').textContent = `(${num})`;
+        document.getElementById('editMeterType').value = btn.getAttribute('data-type');
+        document.getElementById('editMeterReading').value = btn.getAttribute('data-reading');
+        document.getElementById('editMeterStatus').value = btn.getAttribute('data-status');
+        
+        // Add current assigned consumer as an option if not already in unassignedConsumers
+        const consumerId = btn.getAttribute('data-consumer');
+        const select = document.getElementById('editMeterConsumer');
+        if (consumerId && !select.querySelector(`option[value="${consumerId}"]`)) {
+          const opt = document.createElement('option');
+          opt.value = consumerId;
+          opt.textContent = 'Current Consumer';
+          select.appendChild(opt);
+        }
+        select.value = consumerId || '';
+
+        editModal.classList.add('active');
+      });
+    });
+  });
+</script>
+
+<%- include('../partials/footer') %>

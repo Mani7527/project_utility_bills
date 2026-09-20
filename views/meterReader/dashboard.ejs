@@ -1,0 +1,121 @@
+<%- include('../partials/header') %>
+
+<div class="app-container">
+  <%- include('../partials/sidebar') %>
+
+  <div class="app-main">
+    <%- include('../partials/navbar') %>
+
+    <div class="content-body">
+      <!-- Flash Alerts -->
+      <% if (errorMessage) { %>
+        <div class="alert alert-danger">
+          <span><%= errorMessage %></span>
+          <button type="button" class="alert-close">&times;</button>
+        </div>
+      <% } %>
+      <% if (successMessage) { %>
+        <div class="alert alert-success">
+          <span><%= successMessage %></span>
+          <button type="button" class="alert-close">&times;</button>
+        </div>
+      <% } %>
+
+      <!-- Metric Cards Grid -->
+      <div class="metrics-grid">
+        <div class="stat-card">
+          <div class="stat-info">
+            <span class="stat-label">Total Assigned Meters</span>
+            <span class="stat-value"><%= stats.totalMeters %></span>
+            <span class="stat-sub">In service network</span>
+          </div>
+          <div class="stat-icon-wrapper icon-blue">📟</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-info">
+            <span class="stat-label">Readings Entered</span>
+            <span class="stat-value" style="color: var(--status-paid);"><%= stats.readingsEntered %></span>
+            <span class="stat-sub">Total submissions by you</span>
+          </div>
+          <div class="stat-icon-wrapper icon-green">✍️</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-info">
+            <span class="stat-label">Pending Readings (<%= currentMonth %>)</span>
+            <span class="stat-value" style="color: var(--status-pending);"><%= stats.pendingReadings %></span>
+            <span class="stat-sub">Meters awaiting monthly audit</span>
+          </div>
+          <div class="stat-icon-wrapper icon-orange">⏳</div>
+        </div>
+      </div>
+
+      <!-- Quick Action Banner -->
+      <div class="card" style="background: linear-gradient(135deg, #1e3a8a, #0284c7); color: #ffffff;">
+        <div class="card-body" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: gap: 16px;">
+          <div>
+            <h2 style="font-size: 1.3rem; font-weight: 800; margin-bottom: 6px;">Ready to record field measurements?</h2>
+            <p style="opacity: 0.9; font-size: 0.92rem;">Select any consumer meter, verify previous readings, and immediately issue automated consumer bills.</p>
+          </div>
+          <a href="/meter-reader/readings/new" class="btn btn-primary" style="background: #ffffff; color: var(--primary); font-weight: 700; white-space: nowrap;">
+            + Record New Reading
+          </a>
+        </div>
+      </div>
+
+      <!-- Recent Readings Table -->
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title">📋 Recent Readings Recorded</h3>
+        </div>
+        <div class="card-body" style="padding: 0;">
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Meter No</th>
+                  <th>Consumer</th>
+                  <th>Period</th>
+                  <th>Previous Reading</th>
+                  <th>Current Reading</th>
+                  <th>Units Consumed</th>
+                  <th>Recorded Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% if (recentReadings && recentReadings.length > 0) { %>
+                  <% recentReadings.forEach(r => { %>
+                    <tr>
+                      <td><strong><%= r.meterId ? r.meterId.meterNumber : 'N/A' %></strong></td>
+                      <td>
+                        <strong><%= r.consumerId ? r.consumerId.name : 'Unknown' %></strong>
+                        <div style="font-size: 0.75rem; color: var(--gray-500);"><%= r.consumerId ? r.consumerId.consumerId : '' %></div>
+                      </td>
+                      <td><%= r.month %> <%= r.year %></td>
+                      <td><%= r.previousReading %></td>
+                      <td><strong><%= r.currentReading %></strong></td>
+                      <td>
+                        <span class="badge badge-active">+<%= r.unitsConsumed %> units</span>
+                      </td>
+                      <td><%= new Date(r.readingDate).toLocaleDateString() %></td>
+                    </tr>
+                  <% }) %>
+                <% } else { %>
+                  <tr>
+                    <td colspan="7" style="text-align: center; padding: 30px; color: var(--gray-500);">
+                      No readings recorded yet. Click "Record New Reading" above to enter your first measurement.
+                    </td>
+                  </tr>
+                <% } %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>

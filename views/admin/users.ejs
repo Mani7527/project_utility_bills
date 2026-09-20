@@ -1,0 +1,63 @@
+<%- include('../partials/header') %>
+
+<div class="app-container">
+  <%- include('../partials/sidebar') %>
+
+  <div class="app-main">
+    <%- include('../partials/navbar') %>
+
+    <div class="content-body">
+      <!-- Flash Alerts -->
+      <% if (errorMessage) { %>
+        <div class="alert alert-danger">
+          <span><%= errorMessage %></span>
+          <button type="button" class="alert-close">&times;</button>
+        </div>
+      <% } %>
+      <% if (successMessage) { %>
+        <div class="alert alert-success">
+          <span><%= successMessage %></span>
+          <button type="button" class="alert-close">&times;</button>
+        </div>
+      <% } %>
+
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title">🛡️ Registered System Users</h3>
+        </div>
+        <div class="card-body" style="padding: 0;">
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>User Name</th>
+                  <th>Email</th>
+                  <th>System Role</th>
+                  <th>Registered On</th>
+                  <th>Linked Consumer Profile</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% users.forEach(u => { %>
+                  <tr>
+                    <td><strong><%= u.name %></strong></td>
+                    <td><%= u.email %></td>
+                    <td>
+                      <span class="badge <%= u.role === 'admin' ? 'badge-electricity' : (u.role === 'meter_reader' ? 'badge-water' : 'badge-paid') %>">
+                        <%= u.role.replace('_', ' ') %>
+                      </span>
+                    </td>
+                    <td><%= new Date(u.createdAt).toLocaleDateString() %></td>
+                    <td><%= u.consumerRef ? 'Linked' : 'N/A' %></td>
+                  </tr>
+                <% }) %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>

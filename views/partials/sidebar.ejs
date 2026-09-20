@@ -1,0 +1,105 @@
+<aside class="app-sidebar">
+  <div class="sidebar-header">
+    <div class="sidebar-logo-icon">⚡</div>
+    <div class="sidebar-brand">
+      UtilityPro
+      <span>Smart Billing System</span>
+    </div>
+  </div>
+
+  <ul class="sidebar-nav">
+    <% if (user && user.role === 'admin') { %>
+      <div class="nav-category">Administration</div>
+      <li>
+        <a href="/admin/dashboard" class="<%= currentPath === '/admin/dashboard' ? 'active' : '' %>">
+          <span class="nav-icon">📊</span>
+          <span>Dashboard</span>
+        </a>
+      </li>
+      <li>
+        <a href="/admin/consumers" class="<%= currentPath.startsWith('/admin/consumers') ? 'active' : '' %>">
+          <span class="nav-icon">👥</span>
+          <span>Consumers</span>
+        </a>
+      </li>
+      <li>
+        <a href="/admin/meters" class="<%= currentPath.startsWith('/admin/meters') ? 'active' : '' %>">
+          <span class="nav-icon">📟</span>
+          <span>Meters</span>
+        </a>
+      </li>
+      <li>
+        <a href="/admin/tariffs" class="<%= currentPath.startsWith('/admin/tariffs') ? 'active' : '' %>">
+          <span class="nav-icon">🏷️</span>
+          <span>Tariff Slabs</span>
+        </a>
+      </li>
+      <li>
+        <a href="/admin/bills" class="<%= currentPath.startsWith('/admin/bills') ? 'active' : '' %>">
+          <span class="nav-icon">🧾</span>
+          <span>All Bills</span>
+        </a>
+      </li>
+      <li>
+        <a href="/admin/users" class="<%= currentPath.startsWith('/admin/users') ? 'active' : '' %>">
+          <span class="nav-icon">🛡️</span>
+          <span>System Users</span>
+        </a>
+      </li>
+    <% } else if (user && user.role === 'meter_reader') { %>
+      <div class="nav-category">Field Operations</div>
+      <li>
+        <a href="/meter-reader/dashboard" class="<%= currentPath === '/meter-reader/dashboard' ? 'active' : '' %>">
+          <span class="nav-icon">📊</span>
+          <span>Dashboard</span>
+        </a>
+      </li>
+      <li>
+        <a href="/meter-reader/readings/new" class="<%= currentPath === '/meter-reader/readings/new' ? 'active' : '' %>">
+          <span class="nav-icon">✍️</span>
+          <span>Enter Meter Reading</span>
+        </a>
+      </li>
+    <% } else if (user && user.role === 'consumer') { %>
+      <div class="nav-category">My Account</div>
+      <li>
+        <a href="/consumer/dashboard" class="<%= currentPath === '/consumer/dashboard' ? 'active' : '' %>">
+          <span class="nav-icon">🏠</span>
+          <span>Overview</span>
+        </a>
+      </li>
+      <li>
+        <a href="/consumer/bills" class="<%= currentPath.startsWith('/consumer/bills') ? 'active' : '' %>">
+          <span class="nav-icon">🧾</span>
+          <span>Bill History</span>
+        </a>
+      </li>
+      <li>
+        <a href="/consumer/consumption" class="<%= currentPath.startsWith('/consumer/consumption') ? 'active' : '' %>">
+          <span class="nav-icon">📈</span>
+          <span>Consumption History</span>
+        </a>
+      </li>
+    <% } %>
+
+    <div class="nav-category">Session</div>
+    <li>
+      <a href="/auth/logout">
+        <span class="nav-icon">🚪</span>
+        <span>Logout</span>
+      </a>
+    </li>
+  </ul>
+
+  <% if (user) { %>
+    <div class="sidebar-footer">
+      <div class="user-badge">
+        <div class="user-avatar"><%= user.name ? user.name.charAt(0).toUpperCase() : 'U' %></div>
+        <div class="user-meta">
+          <div class="user-name"><%= user.name %></div>
+          <div class="user-role"><%= user.role.replace('_', ' ') %></div>
+        </div>
+      </div>
+    </div>
+  <% } %>
+</aside>

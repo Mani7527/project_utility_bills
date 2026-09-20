@@ -1,0 +1,180 @@
+<%- include('../partials/header') %>
+
+<div class="app-container">
+  <%- include('../partials/sidebar') %>
+
+  <div class="app-main">
+    <%- include('../partials/navbar') %>
+
+    <div class="content-body">
+      <!-- Flash Alerts -->
+      <% if (errorMessage) { %>
+        <div class="alert alert-danger">
+          <span><%= errorMessage %></span>
+          <button type="button" class="alert-close">&times;</button>
+        </div>
+      <% } %>
+      <% if (successMessage) { %>
+        <div class="alert alert-success">
+          <span><%= successMessage %></span>
+          <button type="button" class="alert-close">&times;</button>
+        </div>
+      <% } %>
+
+      <!-- Consumer Profile Header Card -->
+      <div class="card" style="background: linear-gradient(135deg, #1e3a8a 0%, #0f172a 100%); color: #ffffff; margin-bottom: 24px;">
+        <div class="card-body">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 16px;">
+            <div>
+              <span class="badge <%= consumer && consumer.connectionType === 'Water' ? 'badge-water' : 'badge-electricity' %>" style="margin-bottom: 8px;">
+                <%= consumer ? consumer.connectionType : 'Electricity' %> Connection
+              </span>
+              <h2 style="font-size: 1.6rem; font-weight: 800;"><%= consumer ? consumer.name : user.name %></h2>
+              <div style="display: flex; gap: 20px; margin-top: 8px; font-size: 0.9rem; opacity: 0.9; flex-wrap: wrap;">
+                <span>Consumer ID: <strong><%= consumer ? consumer.consumerId : 'N/A' %></strong></span>
+                <span>Meter Number: <strong><%= consumer && consumer.meterId ? consumer.meterId.meterNumber : 'Not Assigned' %></strong></span>
+                <span>Address: <strong><%= consumer ? consumer.address : 'N/A' %></strong></span>
+              </div>
+            </div>
+
+            <div style="display: flex; gap: 10px;">
+              <a href="/consumer/bills" class="btn btn-secondary btn-sm" style="background: rgba(255,255,255,0.15); color: #fff; border-color: rgba(255,255,255,0.3);">
+                View Bill History
+              </a>
+              <a href="/consumer/consumption" class="btn btn-secondary btn-sm" style="background: rgba(255,255,255,0.15); color: #fff; border-color: rgba(255,255,255,0.3);">
+                Consumption History
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Current Bill Overview Card -->
+      <% if (currentBill) { %>
+        <div class="card" style="border: 2px solid <%= currentBill.status === 'PAID' ? '#bbf7d0' : '#fecaca' %>;">
+          <div class="card-header" style="background: <%= currentBill.status === 'PAID' ? '#f0fdf4' : '#fef2f2' %>;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <h3 class="card-title">🧾 Current Bill — <%= currentBill.billingMonth %> <%= currentBill.billingYear %></h3>
+              <span class="badge <%= currentBill.status === 'PAID' ? 'badge-paid' : 'badge-unpaid' %>">
+                <%= currentBill.status %>
+              </span>
+              <% if (currentBill.surcharge > 0) { %>
+                <span class="badge badge-pending">Late Surcharge Applied (+₹<%= currentBill.surcharge %>)</span>
+              <% } %>
+            </div>
+            <span>Bill #<strong><%= currentBill.billId %></strong></span>
+          </div>
+
+          <div class="card-body">
+            <div class="reading-highlight-banner" style="margin-bottom: 20px;">
+              <div class="reading-item">
+                <div class="r-lbl">Previous Reading</div>
+                <div class="r-val"><%= currentBill.previousReading %></div>
+              </div>
+              <div class="reading-item">
+                <div class="r-lbl">Current Reading</div>
+                <div class="r-val"><%= currentBill.currentReading %></div>
+              </div>
+              <div class="reading-item">
+                <div class="r-lbl">Units Consumed</div>
+                <div class="r-val" style="color: var(--secondary);"><%= currentBill.unitsConsumed %> units</div>
+              </div>
+              <div class="reading-item">
+                <div class="r-lbl">Due Date</div>
+                <div class="r-val" style="font-size: 1.15rem; color: <%= new Date() > new Date(currentBill.dueDate) && currentBill.status === 'UNPAID' ? 'var(--status-unpaid)' : 'inherit' %>;">
+                  <%= new Date(currentBill.dueDate).toLocaleDateString() %>
+                </div>
+              </div>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; padding: 16px; background: var(--gray-50); border-radius: var(--radius-sm);">
+              <div>
+                <div style="font-size: 0.85rem; color: var(--gray-500);">Net Payable Amount</div>
+                <div style="font-size: 1.8rem; font-weight: 800; color: var(--primary);">
+                  ₹<%= currentBill.totalAmount %>
+                </div>
+                <div style="font-size: 0.78rem; color: var(--gray-500);">
+                  Includes Energy (₹<%= currentBill.energyCharge %>) + Fixed Charge (₹<%= currentBill.fixedCharge %>)
+                  <% if (currentBill.surcharge > 0) { %> + 5% Late Surcharge (₹<%= currentBill.surcharge %>)<% } %>
+                </div>
+              </div>
+
+              <div style="display: flex; gap: 12px; align-items: center;">
+                <a href="/bills/<%= currentBill._id %>" class="btn btn-outline-primary">
+                  View Detailed Invoice
+                </a>
+
+                <% if (currentBill.status === 'UNPAID') { %>
+                  <form action="/bills/<%= currentBill._id %>/pay" method="POST">
+                    <button type="submit" class="btn btn-success btn-lg">
+                      💳 Pay Bill (Simulated)
+                    </button>
+                  </form>
+                <% } else { %>
+                  <button class="btn btn-secondary btn-lg" disabled style="color: var(--status-paid); font-weight: 700;">
+                    ✓ Bill Paid on <%= currentBill.paymentDate ? new Date(currentBill.paymentDate).toLocaleDateString() : 'N/A' %>
+                  </button>
+                <% } %>
+              </div>
+            </div>
+          </div>
+        </div>
+      <% } else { %>
+        <div class="card">
+          <div class="card-body" style="text-align: center; padding: 40px;">
+            <div style="font-size: 2.5rem; margin-bottom: 12px;">🎉</div>
+            <h3 style="font-size: 1.2rem; font-weight: 700; margin-bottom: 6px;">No Outstanding Bills</h3>
+            <p style="color: var(--gray-500); font-size: 0.9rem;">
+              Your account is fully up to date. Once the meter reader records your next monthly cycle, your new bill will appear here.
+            </p>
+          </div>
+        </div>
+      <% } %>
+
+      <!-- Recent Consumption Snapshot -->
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title">📈 Recent Monthly Consumption</h3>
+          <a href="/consumer/consumption" class="btn btn-secondary btn-sm">View Full History &rarr;</a>
+        </div>
+        <div class="card-body" style="padding: 0;">
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Month & Year</th>
+                  <th>Previous Reading</th>
+                  <th>Current Reading</th>
+                  <th>Units Consumed</th>
+                  <th>Date Recorded</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% if (recentReadings && recentReadings.length > 0) { %>
+                  <% recentReadings.forEach(r => { %>
+                    <tr>
+                      <td><strong><%= r.month %> <%= r.year %></strong></td>
+                      <td><%= r.previousReading %></td>
+                      <td><%= r.currentReading %></td>
+                      <td><span class="badge badge-active"><%= r.unitsConsumed %> units</span></td>
+                      <td><%= new Date(r.readingDate).toLocaleDateString() %></td>
+                    </tr>
+                  <% }) %>
+                <% } else { %>
+                  <tr>
+                    <td colspan="5" style="text-align: center; padding: 30px; color: var(--gray-500);">
+                      No consumption readings recorded yet.
+                    </td>
+                  </tr>
+                <% } %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>

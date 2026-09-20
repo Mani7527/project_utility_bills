@@ -1,0 +1,105 @@
+<%- include('../partials/header') %>
+
+<div class="app-container">
+  <%- include('../partials/sidebar') %>
+
+  <div class="app-main">
+    <%- include('../partials/navbar') %>
+
+    <div class="content-body">
+      <!-- Flash Alerts -->
+      <% if (errorMessage) { %>
+        <div class="alert alert-danger">
+          <span><%= errorMessage %></span>
+          <button type="button" class="alert-close">&times;</button>
+        </div>
+      <% } %>
+      <% if (successMessage) { %>
+        <div class="alert alert-success">
+          <span><%= successMessage %></span>
+          <button type="button" class="alert-close">&times;</button>
+        </div>
+      <% } %>
+
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title">🧾 All Utility Bills</h3>
+          <div style="display: flex; gap: 8px;">
+            <a href="/admin/bills" class="btn <%= selectedStatus === 'ALL' ? 'btn-primary' : 'btn-secondary' %> btn-sm">All</a>
+            <a href="/admin/bills?status=UNPAID" class="btn <%= selectedStatus === 'UNPAID' ? 'btn-primary' : 'btn-secondary' %> btn-sm">Unpaid</a>
+            <a href="/admin/bills?status=PAID" class="btn <%= selectedStatus === 'PAID' ? 'btn-primary' : 'btn-secondary' %> btn-sm">Paid</a>
+          </div>
+        </div>
+
+        <div class="card-body" style="padding: 0;">
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Bill ID</th>
+                  <th>Consumer</th>
+                  <th>Meter</th>
+                  <th>Period</th>
+                  <th>Units Consumed</th>
+                  <th>Energy + Fixed</th>
+                  <th>Surcharge</th>
+                  <th>Total Amount</th>
+                  <th>Due Date</th>
+                  <th>Status</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% if (bills && bills.length > 0) { %>
+                  <% bills.forEach(b => { %>
+                    <tr>
+                      <td><strong>#<%= b.billId %></strong></td>
+                      <td>
+                        <strong><%= b.consumerId ? b.consumerId.name : 'Unknown' %></strong>
+                        <div style="font-size: 0.75rem; color: var(--gray-500);">ID: <%= b.consumerId ? b.consumerId.consumerId : 'N/A' %></div>
+                      </td>
+                      <td><%= b.meterId ? b.meterId.meterNumber : 'N/A' %></td>
+                      <td><%= b.billingMonth %> <%= b.billingYear %></td>
+                      <td><strong><%= b.unitsConsumed %></strong> units</td>
+                      <td>₹<%= b.energyCharge %> + ₹<%= b.fixedCharge %></td>
+                      <td>
+                        <% if (b.surcharge > 0) { %>
+                          <span style="color: var(--status-unpaid); font-weight: 600;">+₹<%= b.surcharge %></span>
+                        <% } else { %>
+                          <span style="color: var(--gray-400);">₹0</span>
+                        <% } %>
+                      </td>
+                      <td><strong style="font-size: 1rem; color: var(--primary);">₹<%= b.totalAmount %></strong></td>
+                      <td><%= new Date(b.dueDate).toLocaleDateString() %></td>
+                      <td>
+                        <span class="badge <%= b.status === 'PAID' ? 'badge-paid' : 'badge-unpaid' %>">
+                          <%= b.status %>
+                        </span>
+                        <% if (b.paymentDate) { %>
+                          <div style="font-size: 0.72rem; color: var(--gray-500); margin-top: 2px;">
+                            <%= new Date(b.paymentDate).toLocaleDateString() %>
+                          </div>
+                        <% } %>
+                      </td>
+                      <td>
+                        <a href="/bills/<%= b._id %>" class="btn btn-outline-primary btn-sm">View Bill</a>
+                      </td>
+                    </tr>
+                  <% }) %>
+                <% } else { %>
+                  <tr>
+                    <td colspan="11" style="text-align: center; padding: 30px; color: var(--gray-500);">
+                      No bills found matching this filter.
+                    </td>
+                  </tr>
+                <% } %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>
