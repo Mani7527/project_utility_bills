@@ -16,7 +16,7 @@ const connectDB = async () => {
   if (primaryUri) {
     try {
       await mongoose.connect(primaryUri, {
-        serverSelectionTimeoutMS: 4000
+        serverSelectionTimeoutMS: 15000
       });
 
       // Verify authenticated database ping
